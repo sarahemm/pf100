@@ -58,7 +58,7 @@ class PF100Meter
 
   def expect_response(expected_packet)
     response = receive
-    return nil if !response or response.data == []
+    return nil if !response or response.type == nil
     return true if response == expected_packet
     # TODO: this should be more elegant
     puts "Received unexpected message from PF100, aborting."
@@ -95,6 +95,12 @@ class PF100Meter
       records.push PF100Record.new(year, month, day, hour, minute, pef, fev)
     end
     records
+  end
+
+  def clear_all_data
+    clear_pkt = PF100Packet.new(:request, [0x2d, 0x7b, 0x7d, 0x7e, 0x53, 0x60, 0xff])
+    send clear_pkt
+    expect_response PF100Packet.new(:response, [])
   end
 end
 

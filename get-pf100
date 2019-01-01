@@ -8,6 +8,7 @@ require './pf100-meter.rb'
 options = {}
 options[:outfile] = nil
 options[:setup] = false
+options[:delete] = false
 OptionParser.new do |opts|
   opts.banner = "Usage: #{$0} [options]"
 
@@ -17,6 +18,10 @@ OptionParser.new do |opts|
   
   opts.on("-s", "--setup", "Perform USB device setup", "(required before first run on some platforms)") do |setup|
     options[:setup] = true
+  end
+
+  opts.on("-d", "--delete", "Delete records from meter after download") do |delete|
+    options[:delete] = true
   end
 
   opts.on_tail("-h", "--help", "Show this message") do
@@ -58,4 +63,12 @@ records.each do |record|
   time = record.time.strftime("%R")
   outfile.printf "%s,%s,%d,%f\n", date, time, record.pef, record.fev 
 end
-outfile.close
+outfile.close if options[:outfile]
+
+if(options[:delete]) then
+  if(meter.clear_all_data) then
+    puts "Deleted records from meter."
+  else
+    puts "Failed to delete records from meter."
+  end
+end
