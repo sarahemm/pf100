@@ -1,0 +1,61 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+require './pf100-record.rb'
+require './pf100-packet.rb'
+require './pf100-meter.rb'
+
+options = {}
+options[:outfile] = nil
+options[:setup] = false
+OptionParser.new do |opts|
+  opts.banner = "Usage: #{$0} [options]"
+
+  opts.on("-o", "--outfile [OUTFILE]", "File to write records to", "(defaults to stdout)") do |outfile|
+    options[:outfile] = outfile
+  end
+  
+  opts.on("-s", "--setup", "Perform USB device setup", "(required before first run on some platforms)") do |setup|
+    options[:setup] = true
+  end
+
+  opts.on_tail("-h", "--help", "Show this message") do
+    puts opts
+    exit
+  end
+end.parse!
+
+if(options[:setup]) then
+  if(PF100Meter::setup) then
+    puts "Driver setup complete.\nYou must now disconnect and reconnect the meter or, on some platforms, reboot before the meter will work."
+  else
+    puts "Driver setup failed."
+  end
+  Kernel.exit 1
+end
+
+meter = PF100Meter.new
+while(!meter.connected?)
+  STDERR.puts "Waiting for PF100 meter to be connected..."
+  sleep 2
+  meter.connect
+end
+puts "Found PF100."
+
+while(!meter.ping)
+  STDERR.puts "Please turn PF100 on now."
+  sleep 2
+end
+STDERR.puts "PF100 meter initialized."
+
+STDERR.puts "Reading memory records..."
+records = meter.get_records
+outfile = STDOUT
+outfile = open(options[:outfile], "w") if options[:outfile]
+outfile.puts "Date,Time,PEF,FEV1"
+records.each do |record|
+  date = record.time.strftime("%F")
+  time = record.time.strftime("%R")
+  outfile.printf "%s,%s,%d,%f\n", date, time, record.pef, record.fev 
+end
+outfile.close
