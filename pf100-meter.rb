@@ -61,15 +61,23 @@ class PF100Meter
     return nil if !response or response.type == nil
     return true if response == expected_packet
     # TODO: this should be more elegant
-    puts "Received unexpected message from PF100, aborting."
+    raise "Received unexpected message from PF100 expected #{expected_packet.data}, got #{response.data} aborting."
     Kernel.exit(2)
   end
 
   def ping
     ping_pkt = PF100Packet.new(:request, [0x2c, 0x7b, 0x7d])
     send ping_pkt
-    pong_pkt = PF100Packet.new(:response, [0x2c, 0x7b, 0x00, 0x00, 0x20, 0x56, 0x7d])
-    expect_response pong_pkt
+    pong_pkt = PF100Packet.new(:response, [0x2c, 0x7b, 0x00, 0x01, 0x20, 0x56, 0x7d])
+    begin
+      expect_response pong_pkt
+    rescue Exception => e
+      puts e.message
+      pong_pkt = PF100Packet.new(:response, [0x2c, 0x7b, 0x00, 0x00, 0x20, 0x56, 0x7d])
+      expect_response pong_pkt
+      return true
+    end
+    #return true
   end
 
   def get_records
@@ -81,6 +89,7 @@ class PF100Meter
     while(true)
       record = raw_records.shift(12)
       break if record == []
+      puts record
       year = "20#{record[2].to_s(16)}".to_i
       month = record[3].to_s(16).to_i
       day = record[4].to_s(16).to_i
