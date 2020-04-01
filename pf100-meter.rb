@@ -87,21 +87,24 @@ class PF100Meter
     raw_records = records_pkt.data
     records = Array.new
     while(true)
-      record = raw_records.shift(12)
-      break if record == []
-      puts record
-      year = "20#{record[2].to_s(16)}".to_i
-      month = record[3].to_s(16).to_i
-      day = record[4].to_s(16).to_i
-      hour = record[5].to_s(16).to_i
-      minute = record[6].to_s(16).to_i
-      pef_right = record[7].to_s(16).to_i
-      pef_left = record[8].to_s(16).to_i
-      pef = sprintf("%d%02d", pef_left, pef_right).to_i
-      fev_right = record[9].to_s(16).to_i
-      fev_left = record[10].to_s(16).to_i
-      fev = sprintf("%d.%02d", fev_left, fev_right).to_f
-      records.push PF100Record.new(year, month, day, hour, minute, pef, fev)
+      begin
+        record = raw_records.shift(12)
+        break if record == []
+        year = "20#{record[2].to_s(16)}".to_i
+        month = record[3].to_s(16).to_i
+        day = record[4].to_s(16).to_i
+        hour = record[5].to_s(16).to_i
+        minute = record[6].to_s(16).to_i
+        pef_right = record[7].to_s(16).to_i
+        pef_left = record[8].to_s(16).to_i
+        pef = sprintf("%d%02d", pef_left, pef_right).to_i
+        fev_right = record[9].to_s(16).to_i
+        fev_left = record[10].to_s(16).to_i
+        fev = sprintf("%d.%02d", fev_left, fev_right).to_f
+        records.push PF100Record.new(year, month, day, hour, minute, pef, fev)
+      rescue ArgumentError => e
+        break
+      end 
     end
     records
   end
