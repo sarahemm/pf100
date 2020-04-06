@@ -4,6 +4,8 @@ require 'optparse'
 require './pf100-record.rb'
 require './pf100-packet.rb'
 require './pf100-meter.rb'
+require 'pry'
+gem 'pry-byebug'
 
 options = {}
 options[:outfile] = nil
@@ -56,8 +58,10 @@ STDERR.puts "PF100 meter initialized."
 STDERR.puts "Reading memory records..."
 records = meter.get_records
 outfile = STDOUT
-outfile = open(options[:outfile], "w") if options[:outfile]
-outfile.puts "Date,Time,PEF,FEV1"
+outfile = open(options[:outfile], "a") if options[:outfile]
+if (File.zero?(outfile))
+  outfile.puts "Date,Time,PEF,FEV1"
+end
 records.each do |record|
   date = record.time.strftime("%F")
   time = record.time.strftime("%R")

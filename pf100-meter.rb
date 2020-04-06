@@ -1,4 +1,6 @@
 require 'hidapi'
+require 'pry'
+gem 'pry-byebug'
 
 class PF100Meter
   VENDOR_ID = 0x04b4
@@ -72,12 +74,10 @@ class PF100Meter
     begin
       expect_response pong_pkt
     rescue Exception => e
-      puts e.message
       pong_pkt = PF100Packet.new(:response, [0x2c, 0x7b, 0x00, 0x00, 0x20, 0x56, 0x7d])
       expect_response pong_pkt
       return true
     end
-    #return true
   end
 
   def get_records
