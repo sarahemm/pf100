@@ -62,7 +62,6 @@ class PF100Meter
     response = receive
     return nil if !response or response.type == nil
     return true if response == expected_packet
-    # TODO: this should be more elegant
     raise "Received unexpected message from PF100 expected #{expected_packet.data}, got #{response.data} aborting."
     Kernel.exit(2)
   end
