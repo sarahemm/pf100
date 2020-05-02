@@ -5,8 +5,6 @@ require './pf100-record.rb'
 require './pf100-packet.rb'
 require './pf100-meter.rb'
 require 'date'
-require 'pry'
-gem 'pry-byebug'
 
 options = {}
 options[:outfile] = nil

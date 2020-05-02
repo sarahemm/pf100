@@ -1,6 +1,4 @@
 require 'hidapi'
-require 'pry'
-gem 'pry-byebug'
 
 class PF100Meter
   VENDOR_ID = 0x04b4
