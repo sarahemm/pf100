@@ -61,7 +61,7 @@ outfile = open(options[:outfile], "a") if options[:outfile]
 if (File.zero?(outfile))
   outfile.puts "Date,Time,PEF,FEV1"
   last_datetime = DateTime.new(1970)
-else
+elsif options[:outfile]
   outfile_examine = open(options[:outfile],"r+")
   last_reading = outfile_examine.to_a.last
   last_date = last_reading[0,last_reading.index(',')]
@@ -74,8 +74,8 @@ records.each do |record|
   if (record.time > last_datetime)
     date = record.time.strftime("%F")
     time = record.time.strftime("%R")
-    outfile.printf "%s,%s,%d,%f\n", date, time, record.pef, record.fev
-  end 
+    outfile.printf "%s,%s,%d,%f\n", date, time, record.pef, record.fev  
+  end    
 end
 outfile.close if options[:outfile]
 

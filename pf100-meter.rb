@@ -100,7 +100,9 @@ class PF100Meter
         fev = sprintf("%d.%02d", fev_left, fev_right).to_f
         records.push PF100Record.new(year, month, day, hour, minute, pef, fev)
       rescue ArgumentError => e
-        break
+        puts e, record, 'month' , month, day
+        puts 'records left', raw_records.length
+        next
       end 
     end
     records
