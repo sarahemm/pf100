@@ -4,6 +4,7 @@ require 'optparse'
 require './pf100-record.rb'
 require './pf100-packet.rb'
 require './pf100-meter.rb'
+require 'date'
 
 options = {}
 options[:outfile] = nil
@@ -56,12 +57,25 @@ STDERR.puts "PF100 meter initialized."
 STDERR.puts "Reading memory records..."
 records = meter.get_records
 outfile = STDOUT
-outfile = open(options[:outfile], "w") if options[:outfile]
-outfile.puts "Date,Time,PEF,FEV1"
+outfile = open(options[:outfile], "a") if options[:outfile]
+if (File.zero?(outfile))
+  outfile.puts "Date,Time,PEF,FEV1"
+  last_datetime = DateTime.new(1970)
+elsif options[:outfile]
+  outfile_examine = open(options[:outfile],"r+")
+  last_reading = outfile_examine.to_a.last
+  last_date = last_reading[0,last_reading.index(',')]
+  rest_of_record = last_reading[last_reading.index(',')+1...-1]
+  last_time = rest_of_record[0,rest_of_record.index(',')]
+  last_datetime = DateTime.strptime(last_date+last_time,'%Y-%m-%d%H:%M')
+  outfile_examine.close
+end
 records.each do |record|
-  date = record.time.strftime("%F")
-  time = record.time.strftime("%R")
-  outfile.printf "%s,%s,%d,%f\n", date, time, record.pef, record.fev 
+  if (record.time > last_datetime)
+    date = record.time.strftime("%F")
+    time = record.time.strftime("%R")
+    outfile.printf "%s,%s,%d,%f\n", date, time, record.pef, record.fev  
+  end    
 end
 outfile.close if options[:outfile]
 

@@ -60,16 +60,21 @@ class PF100Meter
     response = receive
     return nil if !response or response.type == nil
     return true if response == expected_packet
-    # TODO: this should be more elegant
-    puts "Received unexpected message from PF100, aborting."
+    raise "Received unexpected message from PF100 expected #{expected_packet.data}, got #{response.data} aborting."
     Kernel.exit(2)
   end
 
   def ping
     ping_pkt = PF100Packet.new(:request, [0x2c, 0x7b, 0x7d])
     send ping_pkt
-    pong_pkt = PF100Packet.new(:response, [0x2c, 0x7b, 0x00, 0x00, 0x20, 0x56, 0x7d])
-    expect_response pong_pkt
+    pong_pkt = PF100Packet.new(:response, [0x2c, 0x7b, 0x00, 0x01, 0x20, 0x56, 0x7d])
+    begin
+      expect_response pong_pkt
+    rescue Exception => e
+      pong_pkt = PF100Packet.new(:response, [0x2c, 0x7b, 0x00, 0x00, 0x20, 0x56, 0x7d])
+      expect_response pong_pkt
+      return true
+    end
   end
 
   def get_records
@@ -79,20 +84,26 @@ class PF100Meter
     raw_records = records_pkt.data
     records = Array.new
     while(true)
-      record = raw_records.shift(12)
-      break if record == []
-      year = "20#{record[2].to_s(16)}".to_i
-      month = record[3].to_s(16).to_i
-      day = record[4].to_s(16).to_i
-      hour = record[5].to_s(16).to_i
-      minute = record[6].to_s(16).to_i
-      pef_right = record[7].to_s(16).to_i
-      pef_left = record[8].to_s(16).to_i
-      pef = sprintf("%d%02d", pef_left, pef_right).to_i
-      fev_right = record[9].to_s(16).to_i
-      fev_left = record[10].to_s(16).to_i
-      fev = sprintf("%d.%02d", fev_left, fev_right).to_f
-      records.push PF100Record.new(year, month, day, hour, minute, pef, fev)
+      begin
+        record = raw_records.shift(12)
+        break if record == []
+        year = "20#{record[2].to_s(16)}".to_i
+        month = record[3].to_s(16).to_i
+        day = record[4].to_s(16).to_i
+        hour = record[5].to_s(16).to_i
+        minute = record[6].to_s(16).to_i
+        pef_right = record[7].to_s(16).to_i
+        pef_left = record[8].to_s(16).to_i
+        pef = sprintf("%d%02d", pef_left, pef_right).to_i
+        fev_right = record[9].to_s(16).to_i
+        fev_left = record[10].to_s(16).to_i
+        fev = sprintf("%d.%02d", fev_left, fev_right).to_f
+        records.push PF100Record.new(year, month, day, hour, minute, pef, fev)
+      rescue ArgumentError => e
+        puts e, record, 'month' , month, day
+        puts 'records left', raw_records.length
+        next
+      end 
     end
     records
   end
